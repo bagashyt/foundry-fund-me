@@ -23,19 +23,23 @@ contract InteractionTest is Test {
         //console.log("FundMe balance after funding:", address(fundMe).balance);
     }
 
-    function testUserCanFundInteractions() public {
-        FundFundMe fundFundMe = new FundFundMe();
-        console.log("USER balance before funding:", USER.balance);
-        //vm.prank(USER);
-        fundFundMe.fundFundMe(address(fundMe));
-        console.log("User balance after funding:", address(USER).balance);
-        //assert(address(fundMe).balance == 0.01 ether);
+    function testUserCanFundAndOwnerWithdraw() public {
+        uint256 preUserBalance = address(USER).balance;
+        uint256 preOwnerBalance = address(fundMe.getOwner()).balance;
+        uint256 originalFundMeBalance = address(fundMe).balance;
+
+        // Using vm.prank to simulate funding from the USER address
+        vm.prank(USER);
+        fundMe.fund{value: SEND_VALUE}();
 
         WithdrawFundMe withdrawFundMe = new WithdrawFundMe();
-        //vm.prank(fundMe.getOwner());
         withdrawFundMe.withdrawFundMe(address(fundMe));
-        console.log("FundMe balance after withdrawal:", address(fundMe).balance);
-        assert(address(fundMe).balance == 0);
 
+        uint256 afterUserBalance = address(USER).balance;
+        uint256 afterOwnerBalance = address(fundMe.getOwner()).balance;
+
+        assert(address(fundMe).balance == 0);
+        assertEq(afterUserBalance + SEND_VALUE, preUserBalance);
+        assertEq(preOwnerBalance + SEND_VALUE + originalFundMeBalance, afterOwnerBalance);
     }
 }
